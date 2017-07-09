@@ -98,7 +98,7 @@ class CommitteeMeetingProtocolsScraper(BaseDatapackageScraper):
         return protocol_ok, protocol_message, attended_ok, attended_message
 
     def _save_attendees(self, meeting, attendees):
-        CommitteeMettingAttendees.objects.bulk_create(attendees)
+        CommitteeMeetingAttendee.objects.bulk_create(attendees)
         meeting.save()
 
     def _update_attendees(self, meeting, attendees_file_path):
@@ -109,8 +109,8 @@ class CommitteeMeetingProtocolsScraper(BaseDatapackageScraper):
             attendees_ok = True
             with open(attendees_file_path) as f:
                 attendees = csv.reader(f)
-                assert parts.next() == ['name','role','additional_information']
-                committee_attendees = [CommitteeMeetingAttendee(meeting=meeting,name=attendee[0],role=attendee[1],additional_information=attendee[2])
+                assert attendees.next() == ['name','role','additional_information']
+                committee_attendees = [CommitteeMeetingAttendee(comittee_meeting=meeting,name=attendee[0],role=attendee[1],additional_information=attendee[2] if len(attendee) > 2 else '')
                                         for attendee in enumerate(attendees)]
                 self._save_attendees(meeting,committee_attendees)
                 attendees_message = "inserted attendees"
@@ -137,11 +137,9 @@ class CommitteeMeetingProtocolsScraper(BaseDatapackageScraper):
                 parts_updated, parts_message, attended_updated, attended_message = self._update_protocol_parts(meeting, parts_file_path)
 
             attendees_updated, attendees_message = self._update_attendees(meeting, attendees_file_path)
-        return ok, error, meeting_data, text_updated, text_message, parts_updated, parts_message, attended_updated, attended_message,
-                     attendees_updated, attendees_message
+        return ok, error, meeting_data, text_updated, text_message, parts_updated, parts_message, attendees_updated, attendees_message
 
-    def log_return_value(self, ok, error, meeting_data, text_updated, text_message, parts_updated, parts_message, attended_updated,
-                            attended_message, attendees_updated, attendees_message):
+    def log_return_value(self, ok, error, meeting_data, text_updated, text_message, parts_updated, parts_message, attendees_updated, attendees_message):
 
         if ok:
             self.logger.debug(text_message)
